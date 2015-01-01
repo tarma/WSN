@@ -68,8 +68,13 @@ implementation
   bool busy = FALSE;  
   message_t package;
   RADIO_MSG* s_message;
-  uint16_t count;
-  uint16_t Timer_Period = 1000;
+  ACK_MSG*   s_ack;
+  TIME_MSG*  s_time;
+  uint16_t count = -1;
+  uint16_t Timer_Period = 500;
+  uint16_t out_time = 1999;
+  uint16_t waiting_time = 0;
+  bool     ack_receive = TRUE;
 
   event void Boot.booted() {
     call AMControl.start();
@@ -78,6 +83,7 @@ implementation
   event void AMControl.startDone(error_t err) {
     if (err == SUCCESS) {
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
+      s_ack = (ACK_MSG*)
       s_message->totel_time = 0;
       call Timer.startPeriodic(Timer_Period);
     }
@@ -90,29 +96,67 @@ implementation
 
   event void Timer.fired() 
   {
-    count++;
     s_message->totel_time += Timer_Period;
     call ReadLight.read();
     call ReadTemperature.read();
     call ReadHumidity.read();
-    if(!busy){         
-      if (s_message == NULL) {
-	return;
-      }
-      s_message->nodeid = NODE1;
-      s_message->counter = count;
-      s_message->time_period = Timer_Period;
-      if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
-          busy = TRUE;
-      }
+    if(ack_receive){
+       call Leds.led2On();
+       count++;              
+       if(!busy){         
+          if (s_message == NULL) {
+	    return;
+          }
+          s_message->nodeid = NODE1;
+          s_message->counter = count;
+          s_message->time_period = Timer_Period;
+          if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+              busy = TRUE;
+              waiting_time = 0;
+              ack_receive = FALSE;
+              call Leds.led1On();
+          }
+       }     
+    }
+    else
+    {
+       if(waiting_time > out_time)
+       {
+          if(!busy){         
+            if (s_message == NULL) {
+	       return;
+             }
+            if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+              busy = TRUE;
+              waiting_time = 0;
+              call Leds.led1On();
+            }
+          }
+       }
+       else
+         waiting_time += Timer_Period;   
     }
   }
    
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
+    call Leds.led2Off();
     if (len == sizeof(TIME_MSG)) {
       TIME_MSG* btrpkt = (TIME_MSG*)payload;
       if(btrpkt->nodeid == s_message->nodeid)
-          Timer_Period = btrpkt -> time_period;      
+      {
+          Timer_Period = btrpkt -> time_period;     
+          call Timer.stop();
+          call Timer.startPeriodic(Timer_Period);
+      } 
+    }
+
+    if (len == sizeof(ACK_MSG)) {
+      ACK_MSG* ackpkt = (ACK_MSG*)payload;
+      if(ackpkt->nodeid == s_message->nodeid)
+      {
+         if(ackpkt->counter == s_message->counter)
+            ack_receive = TRUE;         
+      }      
     }
 
     if (len == sizeof(RADIO_MSG)){
@@ -131,6 +175,7 @@ implementation
   event void AMSend.sendDone(message_t* msg, error_t err) {
     if (&package == msg) {
       busy = FALSE;
+      call Leds.led1Off();
     }
   }
 
@@ -138,7 +183,7 @@ implementation
   {
     if (result == SUCCESS){
        s_message->temperature = data;
-       call Leds.led1Toggle();
+       call Leds.led0Toggle();
     }
   }
   
@@ -146,7 +191,7 @@ implementation
   {
     if (result == SUCCESS){
        s_message->humidity = data;
-       call Leds.led2Toggle();
+       //call Leds.led0Toggle();
     }
   }
 
@@ -154,7 +199,7 @@ implementation
   {
     if (result == SUCCESS){
        s_message->light = data;
-       call Leds.led0Toggle();
+       //call Leds.led0Toggle();
     }
   }
 }
