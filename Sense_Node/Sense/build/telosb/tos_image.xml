@@ -1,11 +1,11 @@
 <tos_image>
   <ident>
-    <uidhash>B4098D9BL</uidhash>
-    <hostname>tarma-laptop</hostname>
-    <username>oshan</username>
+    <uidhash>291C46C0L</uidhash>
+    <hostname>nezharen-laptop</hostname>
+    <username>nezharen</username>
     <appname>SenseAppC</appname>
-    <userhash>2EF673FCL</userhash>
-    <timestamp>54A401CBL</timestamp>
+    <userhash>29EE9E1CL</userhash>
+    <timestamp>54A4E4DDL</timestamp>
     <deluge_support>no</deluge_support>
     <platform>telosb</platform>
   </ident>
