@@ -1,21 +1,25 @@
-#include "SenseMote.h"
-
 configuration BaseStationAppC {
 }
 
 implementation {
-  components MainC;
-  components LedsC;
-  components BaseStationC;
-  components ActiveMessageC;
-  components new AMSenderC(AM_RADIO_MSG);
-  components new AMReceiverC(AM_RADIO_MSG);
+  components MainC, BaseStationC, LedsC;
+  components ActiveMessageC as Radio, SerialActiveMessageC as Serial;
+  
+  MainC.Boot <- BaseStationC;
 
-  BaseStationC.Boot -> MainC;
+  BaseStationC.RadioControl -> Radio;
+  BaseStationC.SerialControl -> Serial;
+  
+  BaseStationC.SerialSend -> Serial;
+  BaseStationC.SerialReceive -> Serial.Receive;
+  BaseStationC.SerialPacket -> Serial;
+  BaseStationC.SerialAMPacket -> Serial;
+  
+  BaseStationC.RadioSend -> Radio;
+  BaseStationC.RadioReceive -> Radio.Receive;
+  BaseStationC.RadioSnoop -> Radio.Snoop;
+  BaseStationC.RadioPacket -> Radio;
+  BaseStationC.RadioAMPacket -> Radio;
+  
   BaseStationC.Leds -> LedsC;
-  BaseStationC.Packet -> AMSenderC;
-  BaseStationC.AMSend -> AMSenderC;
-  BaseStationC.Receive -> AMReceiverC;
-  BaseStationC.AMControl -> ActiveMessageC;
 }
-
