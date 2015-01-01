@@ -14,7 +14,7 @@ typedef nx_struct RADIO_MSG {
   nx_uint16_t temperature;
   nx_uint16_t humidity;
   nx_uint16_t light;
-  nx_uint32_t totel_time;
+  nx_uint32_t total_time;
 } RADIO_MSG;
 
 typedef nx_struct TIME_MSG {

@@ -180,15 +180,13 @@ class Graph extends JPanel
     	if (data != null) {
     		switch (parent.getMode()) {
         	case Window.TEMP:
-        		int SOT = data.temp & 16383;
-        		gy = -39.6 + 0.01 * SOT;
+        		gy = data.getPhysicalTemp();
         		break;
         	case Window.HUMID:
-        		int SORH = data.humid & 4095;
-        		gy = -2.0468 + 0.0367 * SORH - 1.5955e-6 * SORH * SORH;
+        		gy = data.getPhysicalHumid();
         		break;
         	case Window.LIGHT:
-        		gy = 0.085 * data.light;
+        		gy = data.getPhysicalTemp();
         		break;
         	}
     	}

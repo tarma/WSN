@@ -68,7 +68,7 @@ public class Oscilloscope implements MessageListener
 
         /* Update interval and mote data */
         periodUpdate(omsg.get_time_period());
-        data.update(omsg.get_nodeid(), omsg.get_counter(), new DataType(omsg.get_temperature(), omsg.get_humidity(), omsg.get_light()));
+        data.update(omsg.get_nodeid(), omsg.get_counter(), new DataType(omsg.get_temperature(), omsg.get_humidity(), omsg.get_light(), omsg.get_counter(), omsg.get_total_time()));
 
         /* Inform the GUI that new data showed up */
         window.newData();

@@ -73,4 +73,8 @@ class Data {
 
     return max;
     }
+    
+    Node getNode(int nodeid) {
+    	return nodes[nodeid];
+    }
 }

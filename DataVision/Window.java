@@ -13,12 +13,16 @@ import javax.swing.table.*;
 import javax.swing.event.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 /* The main GUI object. Build the GUI and coordinate all user activities */
 class Window {
     Oscilloscope parent;
     Graph graph;
+    JPanel main;
     
     Font smallFont = new Font("Dialog", Font.PLAIN, 8);
     Font boldFont = new Font("Dialog", Font.BOLD, 12);
@@ -27,6 +31,7 @@ class Window {
     JLabel xLabel; // Label displaying X axis range
     JTextField sampleText, yText; // inputs for sample period and Y axis range
     JFrame frame;
+    JFileChooser fc;
     int mode;
     public static final int TEMP = 0;
     public static final int HUMID = 1;
@@ -170,7 +175,7 @@ class Window {
 
     /* Build the GUI */
     void setup() {
-	JPanel main = new JPanel(new BorderLayout());
+	main = new JPanel(new BorderLayout());
 
 	main.setMinimumSize(new Dimension(500, 250));
 	main.setPreferredSize(new Dimension(800, 400));
@@ -188,8 +193,6 @@ class Window {
 	
 	graph = new Graph(this);
 	main.add(graph, BorderLayout.CENTER);
-	
-	setMode(Window.TEMP);
 	
 	// Controls. Organised using box layouts.
 	
@@ -213,6 +216,12 @@ class Window {
 	JButton clearButton = makeButton("Clear data", new ActionListener() {
 		public void actionPerformed(ActionEvent e) { clearData(); }
 	    } );
+	
+	JButton genResultButton = makeButton("Export result", new ActionListener() {
+		public void actionPerformed(ActionEvent e) {
+			saveData();
+		}
+	});
 	
 	// Adjust X-axis zoom.
 	Box xControl = new Box(BoxLayout.Y_AXIS);
@@ -244,8 +253,13 @@ class Window {
 	    } );
 	yText.setText(graph.gy0 + " - " + graph.gy1);
 	
+	fc = new JFileChooser();
+	
 	Box controls = new Box(BoxLayout.X_AXIS);
 	controls.add(clearButton);
+	controls.add(Box.createHorizontalGlue());
+	controls.add(Box.createRigidArea(new Dimension(10, 0)));
+	controls.add(genResultButton);
 	controls.add(Box.createHorizontalGlue());
 	controls.add(Box.createRigidArea(new Dimension(20, 0)));
 	controls.add(comboBox);
@@ -259,6 +273,8 @@ class Window {
 	controls.add(yLabel);
 	controls.add(yText);
 	main.add(controls, BorderLayout.SOUTH);
+	
+	setMode(Window.TEMP);
 
 	// The frame part
 	frame = new JFrame("Oscilloscope");
@@ -338,6 +354,9 @@ class Window {
     
     void setMode(int mode) {
     	this.mode = mode;
+    	if (graph.setYAxis(getMinY(), getMaxY())) {
+    		yText.setText(graph.gy0 + " - " + graph.gy1);
+    	}
     }
     
     int getMode() {
@@ -346,7 +365,7 @@ class Window {
     
     int getMinY() {
     	if (mode == Window.TEMP) {
-    		return -275;
+    		return -45;
     	}
     	if (mode == Window.HUMID) {
     		return 0;
@@ -354,19 +373,42 @@ class Window {
     	if (mode == Window.LIGHT) {
     		return 0;
     	}
-    	return -275;
+    	return -45;
     }
     
     int getMaxY() {
     	if (mode == Window.TEMP) {
-    		return 3000;
+    		return 125;
     	}
     	if (mode == Window.HUMID) {
     		return 100;
     	}
     	if (mode == Window.LIGHT) {
-    		return 65536;
+    		return 105000;
     	}
-    	return 65535;
+    	return 105000;
+    }
+    
+    void saveData() {
+    	int returnVal = fc.showSaveDialog(main);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File file = fc.getSelectedFile();
+            try {
+            	file.createNewFile();
+            	BufferedWriter writer = new BufferedWriter(new FileWriter(file));
+            	for (int i = 0; i < moteListModel.getRowCount(); i++) {
+            		String nodeid = moteListModel.getValueAt(i, 0).toString();
+            		Node node = parent.data.getNode(Integer.valueOf(nodeid));
+            		for (int j = 0; j < node.dataEnd; j++) {
+            			DataType data = node.data[j];
+            			writer.write(nodeid + " " + Integer.toString(data.seqid) + " " + Double.toString(data.getPhysicalTemp()) + " " + Double.toString(data.getPhysicalHumid()) + " " + Double.toString(data.getPhysicalLight()) + " " + Long.toString(data.time) + "\n");
+            			writer.flush();
+            		}
+            	}
+            	writer.close();
+            } catch (Exception e) {
+            }
+            
+        }
     }
 }
