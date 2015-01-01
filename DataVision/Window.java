@@ -189,7 +189,7 @@ class Window {
 	graph = new Graph(this);
 	main.add(graph, BorderLayout.CENTER);
 	
-	setMode(this.TEMP);
+	setMode(Window.TEMP);
 	
 	// Controls. Organised using box layouts.
 	
@@ -294,7 +294,7 @@ class Window {
 			  + min 
 			  + " - " 
 			  + max 
-			  + " (expected values between 0 and 65535)");
+			  + " (expected values between " + Integer.toString(getMinY()) + " and "+ Integer.toString(getMaxY()) + ")");
 		}
 		return;
 	    }
@@ -342,5 +342,31 @@ class Window {
     
     int getMode() {
     	return this.mode;
+    }
+    
+    int getMinY() {
+    	if (mode == Window.TEMP) {
+    		return -275;
+    	}
+    	if (mode == Window.HUMID) {
+    		return 0;
+    	}
+    	if (mode == Window.LIGHT) {
+    		return 0;
+    	}
+    	return -275;
+    }
+    
+    int getMaxY() {
+    	if (mode == Window.TEMP) {
+    		return 3000;
+    	}
+    	if (mode == Window.HUMID) {
+    		return 100;
+    	}
+    	if (mode == Window.LIGHT) {
+    		return 65536;
+    	}
+    	return 65535;
     }
 }
