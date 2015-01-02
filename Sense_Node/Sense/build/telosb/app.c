@@ -990,7 +990,7 @@ typedef nx_struct RADIO_MSG {
   nx_uint16_t temperature;
   nx_uint16_t humidity;
   nx_uint16_t light;
-  nx_uint32_t totel_time;
+  nx_uint32_t total_time;
 } __attribute__((packed)) RADIO_MSG;
 
 
@@ -3174,7 +3174,7 @@ static void /*WireAdcStreamP.Alarm.Transform*/TransformAlarmC__1__Counter__overf
 # 89 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
 static void /*WireAdcStreamP.ArbitrateReadStream*/ArbitratedReadStreamC__0__Service__bufferDone(
 # 26 "/opt/tinyos-2.x/tos/system/ArbitratedReadStreamC.nc"
-uint8_t arg_0x40b91f10, 
+uint8_t arg_0x40b90f10, 
 # 89 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
 error_t result, 
 #line 86
@@ -3186,7 +3186,7 @@ uint16_t count);
 #line 102
 static void /*WireAdcStreamP.ArbitrateReadStream*/ArbitratedReadStreamC__0__Service__readDone(
 # 26 "/opt/tinyos-2.x/tos/system/ArbitratedReadStreamC.nc"
-uint8_t arg_0x40b91f10, 
+uint8_t arg_0x40b90f10, 
 # 102 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
 error_t result, uint32_t usActualPeriod);
 #line 89
@@ -6949,7 +6949,7 @@ static inline void /*WireAdcStreamP.Alarm.Transform*/TransformAlarmC__1__Counter
 # 78 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
 static error_t /*WireAdcStreamP.ArbitrateReadStream*/ArbitratedReadStreamC__0__Service__read(
 # 26 "/opt/tinyos-2.x/tos/system/ArbitratedReadStreamC.nc"
-uint8_t arg_0x40b91f10, 
+uint8_t arg_0x40b90f10, 
 # 78 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
 uint32_t usPeriod);
 
@@ -19405,11 +19405,11 @@ static inline void SenseC__AMControl__startDone(error_t err)
   if (err == SUCCESS) {
       SenseC__s_message = (RADIO_MSG *)SenseC__Packet__getPayload(&SenseC__package, sizeof(RADIO_MSG ));
       SenseC__s_ack = (ACK_MSG *)SenseC__Packet__getPayload(&SenseC__ack, sizeof(ACK_MSG ));
-      __nesc_hton_uint32(SenseC__s_message->totel_time.data, 0);
+      __nesc_hton_uint32(SenseC__s_message->total_time.data, 0);
       __nesc_hton_uint32(SenseC__s_ack->counter.data, -1);
+      SenseC__Timer__startPeriodic(SenseC__Timer_Period);
     }
-  else 
-    {
+  else {
       SenseC__AMControl__start();
     }
 }
@@ -23097,7 +23097,7 @@ static inline void SenseC__Timer__fired(void )
   unsigned char *__nesc_temp42;
 
 #line 103
-  (__nesc_temp42 = SenseC__s_message->totel_time.data, __nesc_hton_uint32(__nesc_temp42, __nesc_ntoh_uint32(__nesc_temp42) + SenseC__Timer_Period));
+  (__nesc_temp42 = SenseC__s_message->total_time.data, __nesc_hton_uint32(__nesc_temp42, __nesc_ntoh_uint32(__nesc_temp42) + SenseC__Timer_Period));
   SenseC__ReadLight__read();
   SenseC__ReadTemperature__read();
   SenseC__ReadHumidity__read();
@@ -23111,13 +23111,13 @@ inline static void Msp430RefVoltGeneratorP__RefVolt_2_5V__startDone(error_t erro
 }
 #line 92
 # 78 "/opt/tinyos-2.x/tos/interfaces/ReadStream.nc"
-inline static error_t /*WireAdcStreamP.ArbitrateReadStream*/ArbitratedReadStreamC__0__Service__read(uint8_t arg_0x40b91f10, uint32_t usPeriod){
+inline static error_t /*WireAdcStreamP.ArbitrateReadStream*/ArbitratedReadStreamC__0__Service__read(uint8_t arg_0x40b90f10, uint32_t usPeriod){
 #line 78
   unsigned char __nesc_result;
 #line 78
 
 #line 78
-  __nesc_result = AdcStreamP__ReadStream__read(arg_0x40b91f10, usPeriod);
+  __nesc_result = AdcStreamP__ReadStream__read(arg_0x40b90f10, usPeriod);
 #line 78
 
 #line 78
@@ -28122,7 +28122,7 @@ static void SenseC__send_message(void )
           __nesc_hton_uint16(SenseC__s_message->nodeid.data, 288);
           __nesc_hton_uint32(SenseC__s_message->counter.data, SenseC__count);
           __nesc_hton_uint16(SenseC__s_message->time_period.data, SenseC__Timer_Period);
-          if (SenseC__AMSend__send(AM_BROADCAST_ADDR, &SenseC__package, sizeof(RADIO_MSG )) == SUCCESS) {
+          if (SenseC__AMSend__send(0, &SenseC__package, sizeof(RADIO_MSG )) == SUCCESS) {
               SenseC__busy = TRUE;
               SenseC__waiting_time = 0;
               SenseC__ack_receive = FALSE;
@@ -28139,7 +28139,7 @@ static void SenseC__send_message(void )
               if (SenseC__s_message == (void *)0) {
                   return;
                 }
-              if (SenseC__AMSend__send(AM_BROADCAST_ADDR, &SenseC__package, sizeof(RADIO_MSG )) == SUCCESS) {
+              if (SenseC__AMSend__send(0, &SenseC__package, sizeof(RADIO_MSG )) == SUCCESS) {
                   SenseC__busy = TRUE;
                   SenseC__waiting_time = 0;
                   SenseC__Leds__led1On();

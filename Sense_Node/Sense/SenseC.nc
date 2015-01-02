@@ -89,7 +89,7 @@ implementation
       s_ack = (ACK_MSG*)(call Packet.getPayload(&ack, sizeof(ACK_MSG)));
       s_message->total_time = 0;
       s_ack->counter = -1;
-      //call Timer.startPeriodic(Timer_Period);
+      call Timer.startPeriodic(Timer_Period);
     }
     else {
       call AMControl.start();
@@ -117,7 +117,7 @@ implementation
           s_message->nodeid = NODE1;
           s_message->counter = count;
           s_message->time_period = Timer_Period;
-          if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+          if (call AMSend.send(0, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
               ack_receive = FALSE;
@@ -134,7 +134,7 @@ implementation
             if (s_message == NULL) {
 	       return;
              }
-            if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+            if (call AMSend.send(0, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
               call Leds.led1On();
