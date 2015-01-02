@@ -84,7 +84,7 @@ implementation
   event void AMControl.startDone(error_t err) {
     if (err == SUCCESS) {
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
-      s_message->totel_time = 0;      
+      s_message->total_time = 0;      
       call Timer.startPeriodic(Timer_Period);
     }
     else {
