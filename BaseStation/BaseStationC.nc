@@ -115,10 +115,15 @@ implementation
   message_t* receive(message_t *msg, void *payload, uint8_t len) {
     message_t *ret = msg;
 
+    if (len != sizeof(RADIO_MSG))
+      return ret;
+    if ((call RadioAMPacket.source(msg)) != NODE1)
+      return ret;
+
     atomic {
       RADIO_MSG *btrpkt = (RADIO_MSG*)payload;
       ACK_MSG *ackpkt;
-      if (((btrpkt->nodeid == node1.nodeid) && (btrpkt->counter == node1.counter)) || ((btrpkt->nodeid == node2.nodeid) && (btrpkt->counter == node2.counter)))
+     if (((btrpkt->nodeid == node1.nodeid) && (btrpkt->counter == node1.counter)) || ((btrpkt->nodeid == node2.nodeid) && (btrpkt->counter == node2.counter)))
         if (!serialFull)
         {
           ret = serialQueue[serialIn];
