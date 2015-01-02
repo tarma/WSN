@@ -88,7 +88,7 @@ class Node {
     data[start - dataStart] = readings;
     }
 
-    /* Return value of sample x, or -1 for missing data */
+    /* Return value of sample x, or null for missing data */
     DataType getData(int x) {
     if (x < dataStart || x >= dataEnd) {
         return null;
