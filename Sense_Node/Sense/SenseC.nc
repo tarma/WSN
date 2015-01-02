@@ -59,22 +59,22 @@ module SenseC
 
     interface SplitControl as AMControl;
     interface Packet;
-    interface AMSend;
+    interface AMSend,AMSend_Ack;
     interface Receive;
   }
 }
 implementation
 {
-  bool busy = FALSE;  
-  message_t package;
+  bool busy = FALSE,ack_busy = FALSE;  
+  message_t package,ack;
   RADIO_MSG* s_message;
   ACK_MSG*   s_ack;
-  TIME_MSG*  s_time;
   uint16_t count = -1;
   uint16_t Timer_Period = 500;
   uint16_t out_time = 1999;
   uint16_t waiting_time = 0;
   bool     ack_receive = TRUE;
+  bool     ack_send = FALSE;
 
   event void Boot.booted() {
     call AMControl.start();
@@ -83,7 +83,7 @@ implementation
   event void AMControl.startDone(error_t err) {
     if (err == SUCCESS) {
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
-      s_ack = (ACK_MSG*)
+      s_ack = (ACK_MSG*)(call Packet.getPayload(&ack, sizeof(ACK_MSG)));
       s_message->totel_time = 0;
       call Timer.startPeriodic(Timer_Period);
     }
@@ -139,7 +139,7 @@ implementation
   }
    
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
-    call Leds.led2Off();
+    //call Leds.led2Off();
     if (len == sizeof(TIME_MSG)) {
       TIME_MSG* btrpkt = (TIME_MSG*)payload;
       if(btrpkt->nodeid == s_message->nodeid)
@@ -160,22 +160,45 @@ implementation
     }
 
     if (len == sizeof(RADIO_MSG)){
+      call Leds.led1Off();
+      call Leds.led0On();
       RADIO_MSG* btrpkt = (RADIO_MSG*)payload;
       if(btrpkt -> nodeid == NODE2)
       {
-         btrpkt -> nodeid = NODE1;
-         if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS){
-          busy = TRUE;
-      	 }
+         if(btrpkt -> counter == (s_ack->counter + 1)){
+            s_message = btrpkt;
+            if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS){
+               busy = TRUE;
+      	    }
+            s_ack -> nodeid = btrpkt -> nodeid;
+            s_ack -> counter = btrpkt -> counter;
+         }      
+         if(!ack_busy){
+            ack_send();
+         } 
       }
     }
     return msg;
   }
+  event void ack_send()
+  {
+     if (call AMSend_Ack.send(AM_BROADCAST_ADDR, &ack, sizeof(ACK_MSG)) == SUCCESS){
+        ack_busy = TRUE;
+     }
+  }
 
+  event void AMSend_Ack.sendDone(message_t* msg, error_t err){
+    if(&ack == msg){
+      ack_busy = FALSE;
+      call Leds.led1On();
+      call Leds.led0Off();
+    }
+  }
+  
   event void AMSend.sendDone(message_t* msg, error_t err) {
     if (&package == msg) {
       busy = FALSE;
-      call Leds.led1Off();
+      //call Leds.led1Off();
     }
   }
 
@@ -183,7 +206,7 @@ implementation
   {
     if (result == SUCCESS){
        s_message->temperature = data;
-       call Leds.led0Toggle();
+       //call Leds.led0Toggle();
     }
   }
   

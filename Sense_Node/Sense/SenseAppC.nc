@@ -67,6 +67,7 @@ implementation {
   SenseC.Timer -> Timer;
   SenseC.Packet -> AMSenderC.Packet;
   SenseC.AMSend -> AMSenderC.AMSend;
+  SenseC.AMSend_Ack -> AMSenderC.AMSend;
   SenseC.AMControl -> ActiveMessageC;
   SenseC.Receive -> AMReceiverC;
 }
