@@ -150,13 +150,11 @@ implementation
      if (btrpkt->nodeid == node1.nodeid)
      {
        call SerialPacket.setPayloadLength(&node1_msg, sizeof(ACK_MSG));
-       call SerialAMPacket.setDestination(&node1_msg, AM_BROADCAST_ADDR);
        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node1_msg, sizeof(ACK_MSG)));
      }
      else
      {
        call SerialPacket.setPayloadLength(&node2_msg, sizeof(ACK_MSG));
-       call SerialAMPacket.setDestination(&node2_msg, AM_BROADCAST_ADDR);
        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node2_msg, sizeof(ACK_MSG)));
      }
      ackpkt->nodeid = btrpkt->nodeid;
@@ -209,7 +207,7 @@ implementation
     call SerialPacket.clear(msg);
     call SerialAMPacket.setSource(msg, src);
 
-    if (call SerialSend.send[id](addr, serialQueue[serialOut], len) == SUCCESS)
+    if (call SerialSend.send[id](AM_BROADCAST_ADDR, serialQueue[serialOut], len) == SUCCESS)
       call Leds.led1Toggle();
     else
       {
@@ -288,7 +286,7 @@ implementation
     call RadioPacket.clear(msg);
     call RadioAMPacket.setSource(msg, source);
     
-    if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
+    if (call RadioSend.send[id](NODE1, msg, len) == SUCCESS)
       call Leds.led0Toggle();
     else
       {
