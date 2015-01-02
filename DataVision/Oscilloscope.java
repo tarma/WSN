@@ -44,7 +44,7 @@ public class Oscilloscope implements MessageListener
        with an older version, we broadcast a message with the current interval
        and version. If the user changes the interval, we increment the
        version and broadcast the new interval and version. */
-    int interval = 256;
+    int interval = 500;
 
     /* Main entry point */
     void run() {
