@@ -88,6 +88,7 @@ implementation
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
       s_ack = (ACK_MSG*)(call Packet.getPayload(&ack, sizeof(ACK_MSG)));
       s_message->total_time = 0;
+      s_message->nodeid = NODE1;
       s_ack->counter = -1;
       call Timer.startPeriodic(Timer_Period);
     }
@@ -114,7 +115,6 @@ implementation
           if (s_message == NULL) {
 	    return;
           }
-          s_message->nodeid = NODE1;
           s_message->counter = count;
           s_message->time_period = Timer_Period;
           if (call AMSend.send(0, &package, sizeof(RADIO_MSG)) == SUCCESS) {
@@ -133,7 +133,9 @@ implementation
           if(!busy){         
             if (s_message == NULL) {
 	       return;
-             }
+             }            
+            s_message->counter = count;
+            s_message->time_period = Timer_Period;
             if (call AMSend.send(0, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
@@ -160,20 +162,21 @@ implementation
 
     if (len == sizeof(ACK_MSG)) {
       ACK_MSG* ackpkt = (ACK_MSG*)payload;
+      call Leds.led0Off();
       if(ackpkt->nodeid == s_message->nodeid)
       {
+         call Leds.led0On();
          if(ackpkt->counter == s_message->counter)
             ack_receive = TRUE;         
       }      
     }
 
     if (len == sizeof(RADIO_MSG)){      
-      RADIO_MSG* radpkt = (RADIO_MSG*)payload;      
-      call Leds.led0On();
+      RADIO_MSG* radpkt = (RADIO_MSG*)payload;    
       if(radpkt->nodeid == NODE2)
       {
          call Leds.led1Toggle();
-         call Leds.led2Off();
+         call Leds.led0Toggle();
          if(radpkt -> counter == (s_ack->counter + 1)){
             s_message = radpkt;
             call Leds.led2On();

@@ -100,7 +100,7 @@ implementation
     call ReadLight.read();
     call ReadTemperature.read();
     call ReadHumidity.read();
-    
+    s_message->nodeid = TOS_NODE_ID;
   }
   
   void send_message()
@@ -111,8 +111,7 @@ implementation
        if(!busy){         
           if (s_message == NULL) {
 	    return;
-          }
-          s_message->nodeid = TOS_NODE_ID;
+          }          
           s_message->counter = count;
           s_message->time_period = Timer_Period;
           if (call AMSend.send(NODE1, &package, sizeof(RADIO_MSG)) == SUCCESS) {
@@ -132,6 +131,8 @@ implementation
             if (s_message == NULL) {
 	       return;
              }
+            s_message->counter = count;
+            s_message->time_period = Timer_Period;
             if (call AMSend.send(NODE1, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
