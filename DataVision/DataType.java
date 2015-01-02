@@ -4,10 +4,10 @@ public class DataType {
 	public int temp;
 	public int humid;
 	public int light;
-	public int seqid;
+	public long seqid;
 	public long time;
 
-	public DataType(int temp, int humid, int light, int seqid, long time) {
+	public DataType(int temp, int humid, int light, long seqid, long time) {
 		this.temp = temp;
 		this.humid = humid;
 		this.light = light;

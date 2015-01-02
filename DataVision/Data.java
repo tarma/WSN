@@ -23,7 +23,7 @@ class Data {
 
     /* Data received from mote nodeId containing NREADINGS samples from
        messageId * NREADINGS onwards. Tell parent if this is a new node. */
-    void update(int nodeId, int messageId, DataType readings) {
+    void update(int nodeId, long messageId, DataType readings) {
     if (nodeId >= nodes.length) {
         int newLength = nodes.length * 2;
         if (nodeId >= newLength) {

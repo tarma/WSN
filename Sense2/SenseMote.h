@@ -1,10 +1,10 @@
 
 #ifndef SENSEMOTE_H
 #define SENSEMOTE_H
+#define NODE1 288
 
 enum {
-  AM_RADIO_MSG = 6,
-  AM_TIME_MSG = 7
+  AM_RADIO_MSG = 6
 };
 
 typedef nx_struct RADIO_MSG {

@@ -402,7 +402,7 @@ class Window {
             		for (int j = node.dataStart; j < node.dataEnd; j++) {
             			DataType data = node.getData(j);
             			if (data != null) {
-            				writer.write(nodeid + " " + Integer.toString(data.seqid) + " " + Double.toString(data.getPhysicalTemp()) + " " + Double.toString(data.getPhysicalHumid()) + " " + Double.toString(data.getPhysicalLight()) + " " + Long.toString(data.time) + "\n");
+            				writer.write(nodeid + " " + Long.toString(data.seqid) + " " + Double.toString(data.getPhysicalTemp()) + " " + Double.toString(data.getPhysicalHumid()) + " " + Double.toString(data.getPhysicalLight()) + " " + Long.toString(data.time) + "\n");
                 			writer.flush();
             			}
             		}
