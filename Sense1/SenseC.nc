@@ -144,8 +144,55 @@ implementation
       if (len == sizeof(ACK_MSG)) {
         ACK_MSG *btrpkt = (ACK_MSG*)payload;
         if (btrpkt->nodeid == node1.nodeid)
+        {
           if (btrpkt->counter == node1.counter)
             node1_ack = TRUE;
+        }
+        else
+        {
+          call RadioPacket.setPayloadLength(msg, sizeof(ACK_MSG));
+          call RadioAMPacket.setType(msg, AM_RADIO_MSG);
+          call RadioAMPacket.setSource(msg, NODE1);
+          call RadioAMPacket.setDestination(msg, NODE2);
+          if (!radioFull)
+  	  {
+	    ret = radioQueue[radioIn];
+	    *radioQueue[radioIn] = *msg;
+	    radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
+	    if (radioIn == radioOut)
+	      radioFull = TRUE;
+	    if (!radioBusy)
+	    {
+	      post radioSendTask();
+	      radioBusy = TRUE;
+	    }
+            call Leds.led2Toggle();
+	  }
+          else
+	    dropBlink();
+        }
+      }
+      if (len == sizeof(RADIO_MSG)) {
+        call RadioPacket.setPayloadLength(msg, sizeof(RADIO_MSG));
+        call RadioAMPacket.setType(msg, AM_RADIO_MSG);
+        call RadioAMPacket.setSource(msg, NODE1);
+        call RadioAMPacket.setDestination(msg, NODE0);
+        if (!radioFull)
+	  {
+	    ret = radioQueue[radioIn];
+	    *radioQueue[radioIn] = *msg;
+	    radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
+	    if (radioIn == radioOut)
+	      radioFull = TRUE;
+	    if (!radioBusy)
+	    {
+	      post radioSendTask();
+	      radioBusy = TRUE;
+	    }
+            call Leds.led1Toggle();
+	  }
+          else
+	    dropBlink();
       }
     }
     
