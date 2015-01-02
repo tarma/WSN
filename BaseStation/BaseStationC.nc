@@ -286,7 +286,7 @@ implementation
     call RadioPacket.clear(msg);
     call RadioAMPacket.setSource(msg, source);
     
-    if (call RadioSend.send[id](NODE1, msg, len) == SUCCESS)
+    if (call RadioSend.send[id](AM_BROADCAST_ADDR, msg, len) == SUCCESS)
       call Leds.led0Toggle();
     else
       {
