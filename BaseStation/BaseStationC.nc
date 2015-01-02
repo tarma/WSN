@@ -1,8 +1,6 @@
 #include "AM.h"
 #include "Serial.h"
 #include "SenseMote.h"
-#define NODE1 288
-#define NODE2 299
 
 module BaseStationC @safe() {
   uses {
@@ -150,11 +148,15 @@ implementation
      if (btrpkt->nodeid == node1.nodeid)
      {
        call SerialPacket.setPayloadLength(&node1_msg, sizeof(ACK_MSG));
+       call SerialAMPacket.setSource(&node1_msg, NODE0);
+       call SerialAMPacket.setDestination(&node1_msg, NODE1);
        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node1_msg, sizeof(ACK_MSG)));
      }
      else
      {
        call SerialPacket.setPayloadLength(&node2_msg, sizeof(ACK_MSG));
+       call SerialAMPacket.setSource(&node2_msg, NODE0);
+       call SerialAMPacket.setDestination(&node2_msg, NODE1);
        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node2_msg, sizeof(ACK_MSG)));
      }
      ackpkt->nodeid = btrpkt->nodeid;
@@ -286,7 +288,7 @@ implementation
     call RadioPacket.clear(msg);
     call RadioAMPacket.setSource(msg, source);
     
-    if (call RadioSend.send[id](AM_BROADCAST_ADDR, msg, len) == SUCCESS)
+    if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
       call Leds.led0Toggle();
     else
       {

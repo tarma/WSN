@@ -44,6 +44,7 @@
 
 #include <Timer.h>
 #include "SenseMote.h"
+#include "printf.h"
 
 configuration SenseAppC 
 { 

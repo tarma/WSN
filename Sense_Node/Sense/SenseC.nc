@@ -44,6 +44,7 @@
 
 #include <Timer.h>
 #include "SenseMote.h"
+#include "printf.h"
 #define NODE1 288
 #define NODE2 299
 
@@ -84,6 +85,7 @@ implementation
   }
 
   event void AMControl.startDone(error_t err) {
+printf("startDone\n");
     if (err == SUCCESS) {
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
       s_ack = (ACK_MSG*)(call Packet.getPayload(&ack, sizeof(ACK_MSG)));
@@ -101,6 +103,7 @@ implementation
 
   event void Timer.fired() 
   {
+printf("fired\n");
     s_message->total_time += Timer_Period;
     call ReadLight.read();
     call ReadTemperature.read();
@@ -108,6 +111,7 @@ implementation
   }
    
   void send_message(){    
+printf("send_message\n");
     if(ack_receive){
        call Leds.led2Off();
        count++;              
@@ -149,6 +153,7 @@ implementation
     }
   }
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
+printf("%u\n", len);
     //call Leds.led2Off();
     if (len == sizeof(TIME_MSG)) {
       TIME_MSG* btrpkt = (TIME_MSG*)payload;
@@ -203,6 +208,7 @@ implementation
   }
   
   event void AMSend.sendDone(message_t* msg, error_t err) {
+printf("sendDone\n");
     if (&package == msg) {
       busy = FALSE;
       if(!busy && !ack_flag){
@@ -218,6 +224,7 @@ implementation
 
   event void ReadTemperature.readDone(error_t result, uint16_t data) 
   {
+printf("readDone\n");
     if (result == SUCCESS){
        s_message->temperature = data;
        temperature_flag = TRUE;
@@ -238,6 +245,7 @@ implementation
   
   event void ReadHumidity.readDone(error_t result, uint16_t data) 
   {
+printf("readDone\n");
     if (result == SUCCESS){
        s_message->humidity = data;
        humidity_flag = TRUE;
@@ -258,6 +266,7 @@ implementation
 
   event void ReadLight.readDone(error_t result, uint16_t data) 
   {
+printf("readDone\n");
     if (result == SUCCESS){
        s_message->light = data;
        light_flag = TRUE;
