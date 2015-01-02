@@ -22,10 +22,12 @@ public class DataType {
 	
 	public double getPhysicalHumid() {
 		int SORH = this.humid & 4095;
-		return (-2.0468 + 0.0367 * SORH - 1.5955e-6 * SORH * SORH);
+		double temp = this.getPhysicalTemp();
+		double linear = -4 + 0.0405 * SORH - 2.8e-6 * SORH * SORH;
+		return ((temp - 25) * (0.01 + 0.00008 * SORH) + linear);
 	}
 	
 	public double getPhysicalLight() {
-		return (0.085 * this.light);
+		return (85 * this.light);
 	}
 }
