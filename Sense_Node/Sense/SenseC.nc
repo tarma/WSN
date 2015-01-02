@@ -100,7 +100,7 @@ implementation
 
   event void Timer.fired() 
   {
-    s_message->totel_time += Timer_Period;
+    s_message->total_time += Timer_Period;
     call ReadLight.read();
     call ReadTemperature.read();
     call ReadHumidity.read();    
