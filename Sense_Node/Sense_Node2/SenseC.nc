@@ -65,16 +65,14 @@ module SenseC
 }
 implementation
 {
-  bool busy = FALSE,ack_busy = FALSE;  
-  message_t package,ack;
+  bool busy = FALSE;  
+  message_t package;
   RADIO_MSG* s_message;
-  ACK_MSG*   s_ack;
   uint16_t count = -1;
-  uint16_t Timer_Period = 500;
-  uint16_t out_time = 1999;
+  uint16_t Timer_Period = 1000;
+  uint16_t out_time = 2000;
   uint16_t waiting_time = 0;
   bool ack_receive = TRUE;
-  bool ack_flag = TRUE;
   bool light_flag = FALSE;
   bool humidity_flag = FALSE;
   bool temperature_flag = FALSE;
@@ -86,10 +84,8 @@ implementation
   event void AMControl.startDone(error_t err) {
     if (err == SUCCESS) {
       s_message = (RADIO_MSG*)(call Packet.getPayload(&package, sizeof(RADIO_MSG)));
-      s_ack = (ACK_MSG*)(call Packet.getPayload(&ack, sizeof(ACK_MSG)));
-      s_message->totel_time = 0;
-      s_ack->counter = -1;
-      //call Timer.startPeriodic(Timer_Period);
+      s_message->totel_time = 0;      
+      call Timer.startPeriodic(Timer_Period);
     }
     else {
       call AMControl.start();
@@ -103,51 +99,52 @@ implementation
     s_message->totel_time += Timer_Period;
     call ReadLight.read();
     call ReadTemperature.read();
-    call ReadHumidity.read();    
+    call ReadHumidity.read();
+    
   }
-   
-  void send_message(){    
+  
+  void send_message()
+  {
     if(ack_receive){
-       call Leds.led2Off();
+       call Leds.led1Off();
        count++;              
        if(!busy){         
           if (s_message == NULL) {
 	    return;
           }
-          s_message->nodeid = NODE1;
+          s_message->nodeid = TOS_NODE_ID;
           s_message->counter = count;
           s_message->time_period = Timer_Period;
-          if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+          if (call AMSend.send(NODE1, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
               ack_receive = FALSE;
-              call Leds.led2On();
+              call Leds.led1On();
           }
        }     
     }
     else
     {
-       call Leds.led1Off();
-       if(waiting_time > out_time)
+       call Leds.led2Off();
+       if(waiting_time >= out_time)
        {
           if(!busy){         
             if (s_message == NULL) {
 	       return;
              }
-            if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS) {
+            if (call AMSend.send(NODE1, &package, sizeof(RADIO_MSG)) == SUCCESS) {
               busy = TRUE;
               waiting_time = 0;
-              call Leds.led1On();
+              call Leds.led2On();
             }
           }
        }
-       else{
-         waiting_time += Timer_Period; 
-       }  
+       else
+         waiting_time += Timer_Period;   
     }
   }
+
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
-    //call Leds.led2Off();
     if (len == sizeof(TIME_MSG)) {
       TIME_MSG* btrpkt = (TIME_MSG*)payload;
       if(btrpkt->nodeid == s_message->nodeid)
@@ -155,61 +152,26 @@ implementation
           Timer_Period = btrpkt -> time_period;     
           call Timer.stop();
           call Timer.startPeriodic(Timer_Period);
-      } 
-    }
-
+      }    
+    }  
+    
     if (len == sizeof(ACK_MSG)) {
       ACK_MSG* ackpkt = (ACK_MSG*)payload;
+      call Leds.led0Off();
       if(ackpkt->nodeid == s_message->nodeid)
       {
-         if(ackpkt->counter == s_message->counter)
-            ack_receive = TRUE;         
+         call Leds.led0On();
+         if(ackpkt->counter == s_message->counter){
+            ack_receive = TRUE;          
+         }        
       }      
-    }
-
-    if (len == sizeof(RADIO_MSG)){      
-      RADIO_MSG* radpkt = (RADIO_MSG*)payload;      
-      call Leds.led0On();
-      if(radpkt->nodeid == NODE2)
-      {
-         call Leds.led1Toggle();
-         call Leds.led2Off();
-         if(radpkt -> counter == (s_ack->counter + 1)){
-            s_message = radpkt;
-            call Leds.led2On();
-            if (call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(RADIO_MSG)) == SUCCESS){
-               busy = TRUE;
-      	    }
-            s_ack -> nodeid = radpkt -> nodeid;
-            s_ack -> counter = radpkt -> counter;
-         }  
-         else{
-            if(!busy && !ack_flag){
-              if (call AMSend.send(NODE2, &ack, sizeof(ACK_MSG)) == SUCCESS){
-                 ack_flag = TRUE;
-                 busy = TRUE;
-              }
-            } 
-            call Leds.led1On();
-            call Leds.led0Off();
-         }
-      }
-      ack_flag = FALSE;
     }
     return msg;
   }
-  
+
   event void AMSend.sendDone(message_t* msg, error_t err) {
     if (&package == msg) {
       busy = FALSE;
-      if(!busy && !ack_flag){
-          if (call AMSend.send(AM_BROADCAST_ADDR, &ack, sizeof(ACK_MSG)) == SUCCESS){
-             ack_flag = TRUE;
-             busy = TRUE;
-          }
-      } 
-      //call Leds.led1On();
-      //call Leds.led0Off();
     }
   }
 

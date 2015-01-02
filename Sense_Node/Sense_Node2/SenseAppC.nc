@@ -68,5 +68,4 @@ implementation {
   SenseC.Packet -> AMSenderC.Packet;
   SenseC.AMSend -> AMSenderC.AMSend;
   SenseC.AMControl -> ActiveMessageC;
-  SenseC.Receive -> AMReceiverC;
 }
