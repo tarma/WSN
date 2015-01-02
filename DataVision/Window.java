@@ -399,10 +399,12 @@ class Window {
             	for (int i = 0; i < moteListModel.getRowCount(); i++) {
             		String nodeid = moteListModel.getValueAt(i, 0).toString();
             		Node node = parent.data.getNode(Integer.valueOf(nodeid));
-            		for (int j = 0; j < node.dataEnd; j++) {
-            			DataType data = node.data[j];
-            			writer.write(nodeid + " " + Integer.toString(data.seqid) + " " + Double.toString(data.getPhysicalTemp()) + " " + Double.toString(data.getPhysicalHumid()) + " " + Double.toString(data.getPhysicalLight()) + " " + Long.toString(data.time) + "\n");
-            			writer.flush();
+            		for (int j = node.dataStart; j < node.dataEnd; j++) {
+            			DataType data = node.getData(j);
+            			if (data != null) {
+            				writer.write(nodeid + " " + Integer.toString(data.seqid) + " " + Double.toString(data.getPhysicalTemp()) + " " + Double.toString(data.getPhysicalHumid()) + " " + Double.toString(data.getPhysicalLight()) + " " + Long.toString(data.time) + "\n");
+                			writer.flush();
+            			}
             		}
             	}
             	writer.close();

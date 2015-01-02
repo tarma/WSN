@@ -1,5 +1,8 @@
 #include "AM.h"
 #include "Serial.h"
+#include "SenseMote.h"
+#define NODE1 288
+#define NODE2 299
 
 module BaseStationC @safe() {
   uses {
@@ -39,6 +42,10 @@ implementation
   uint8_t    radioIn, radioOut;
   bool       radioBusy, radioFull;
 
+  ACK_MSG    node1, node2;
+  bool       node1Lock, node2Lock;
+  message_t  node1_msg, node2_msg;
+
   task void serialSendTask();
   task void radioSendTask();
 
@@ -64,6 +71,13 @@ implementation
     radioIn = radioOut = 0;
     radioBusy = FALSE;
     radioFull = TRUE;
+
+    node1.nodeid = NODE1;
+    node1.counter = 0;
+    node1Lock = FALSE;
+    node2.nodeid = NODE2;
+    node2.counter = 0;
+    node2Lock = FALSE;
 
     call RadioControl.start();
     call SerialControl.start();
@@ -104,24 +118,68 @@ implementation
     message_t *ret = msg;
 
     atomic {
-      if (!serialFull)
+      RADIO_MSG *btrpkt = (RADIO_MSG*)payload;
+      ACK_MSG *ackpkt;
+      if (((btrpkt->nodeid == node1.nodeid) && (btrpkt->counter == node1.counter)) || ((btrpkt->nodeid == node2.nodeid) && (btrpkt->counter == node2.counter)))
+        if (!serialFull)
+        {
+          ret = serialQueue[serialIn];
+          serialQueue[serialIn] = msg;
+          serialIn = (serialIn + 1) % SERIAL_QUEUE_LEN;
+
+          if (serialIn == serialOut)
+            serialFull = TRUE;
+
+          if (!serialBusy)
+          {
+            post serialSendTask();
+            serialBusy = TRUE;
+          }
+
+          if (btrpkt->nodeid == node1.nodeid)
+            node1.counter++;
+          else
+            node2.counter++;
+        }
+        else
+        {
+	  dropBlink();
+          return ret;
+        }
+
+     if (btrpkt->nodeid == node1.nodeid)
+     {
+       call SerialPacket.setPayloadLength(&node1_msg, sizeof(ACK_MSG));
+       ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node1_msg, sizeof(ACK_MSG)));
+     }
+     else
+     {
+       call SerialPacket.setPayloadLength(&node2_msg, sizeof(ACK_MSG));
+       ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node2_msg, sizeof(ACK_MSG)));
+     }
+     ackpkt->nodeid = btrpkt->nodeid;
+     ackpkt->counter = btrpkt->counter;
+
+     if (!radioFull)
 	{
-	  ret = serialQueue[serialIn];
-	  serialQueue[serialIn] = msg;
+	  ret = radioQueue[radioIn];
+          if (btrpkt->nodeid == node1.nodeid)
+	    radioQueue[radioIn] = &node1_msg;
+          else
+            radioQueue[radioIn] = &node2_msg;
+	  if (++radioIn >= RADIO_QUEUE_LEN)
+	    radioIn = 0;
+	  if (radioIn == radioOut)
+	    radioFull = TRUE;
 
-	  serialIn = (serialIn + 1) % SERIAL_QUEUE_LEN;
-	
-	  if (serialIn == serialOut)
-	    serialFull = TRUE;
-
-	  if (!serialBusy)
+	  if (!radioBusy)
 	    {
-	      post serialSendTask();
-	      serialBusy = TRUE;
+	      post radioSendTask();
+	      radioBusy = TRUE;
 	    }
 	}
       else
-	dropBlink();
+	dropBlink();     
     }
     
     return ret;
@@ -149,7 +207,7 @@ implementation
     call SerialPacket.clear(msg);
     call SerialAMPacket.setSource(msg, src);
 
-    if (call SerialSend.send[id](addr, serialQueue[serialOut], len) == SUCCESS)
+    if (call SerialSend.send[id](AM_BROADCAST_ADDR, serialQueue[serialOut], len) == SUCCESS)
       call Leds.led1Toggle();
     else
       {
@@ -228,7 +286,7 @@ implementation
     call RadioPacket.clear(msg);
     call RadioAMPacket.setSource(msg, source);
     
-    if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
+    if (call RadioSend.send[id](NODE1, msg, len) == SUCCESS)
       call Leds.led0Toggle();
     else
       {
