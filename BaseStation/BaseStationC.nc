@@ -122,7 +122,7 @@ implementation
         if (!serialFull)
         {
           ret = serialQueue[serialIn];
-          serialQueue[serialIn] = msg;
+          *serialQueue[serialIn] = *msg;
           serialIn = (serialIn + 1) % SERIAL_QUEUE_LEN;
 
           if (serialIn == serialOut)
@@ -166,9 +166,9 @@ implementation
 	{
 	  ret = radioQueue[radioIn];
           if (btrpkt->nodeid == node1.nodeid)
-	    radioQueue[radioIn] = &node1_msg;
+	    *radioQueue[radioIn] = node1_msg;
           else
-            radioQueue[radioIn] = &node2_msg;
+            *radioQueue[radioIn] = node2_msg;
 	  if (++radioIn >= RADIO_QUEUE_LEN)
 	    radioIn = 0;
 	  if (radioIn == radioOut)
@@ -244,7 +244,7 @@ implementation
 	{
 	  reflectToken = TRUE;
 	  ret = radioQueue[radioIn];
-	  radioQueue[radioIn] = msg;
+	  *radioQueue[radioIn] = *msg;
 	  if (++radioIn >= RADIO_QUEUE_LEN)
 	    radioIn = 0;
 	  if (radioIn == radioOut)

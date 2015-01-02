@@ -80,9 +80,6 @@ implementation
         node1_ack = FALSE;
       }
       node1.total_time += node1.time_period;
-      call RadioPacket.setPayloadLength(&node1_msg, sizeof(RADIO_MSG));
-      call RadioAMPacket.setSource(&node1_msg, NODE1);
-      call RadioAMPacket.setDestination(&node1_msg, NODE0);
       btrpkt = (RADIO_MSG*)(call RadioPacket.getPayload(&node1_msg, sizeof(RADIO_MSG)));
       btrpkt->nodeid = node1.nodeid;
       btrpkt->counter = node1.counter;
@@ -91,10 +88,14 @@ implementation
       btrpkt->light = node1.light;
       btrpkt->time_period = node1.time_period;
       btrpkt->total_time = node1.total_time;
+      call RadioPacket.setPayloadLength(&node1_msg, sizeof(RADIO_MSG));
+      call RadioAMPacket.setType(&node1_msg, AM_RADIO_MSG);
+      call RadioAMPacket.setSource(&node1_msg, NODE1);
+      call RadioAMPacket.setDestination(&node1_msg, NODE0);
       if (!radioFull)
 	{
 	  ret = radioQueue[radioIn];
-	  radioQueue[radioIn] = &node1_msg;
+	  *radioQueue[radioIn] = node1_msg;
 
 	  radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
 	
