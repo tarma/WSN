@@ -15,6 +15,9 @@ module SenseC @safe() {
 
     interface Leds;
     interface Timer<TMilli> as Timer0;
+    interface Read<uint16_t> as ReadLight;
+    interface Read<uint16_t> as ReadTemperature;
+    interface Read<uint16_t> as ReadHumidity;
   }
 }
 
@@ -28,8 +31,6 @@ implementation
   message_t  * ONE_NOK radioQueue[RADIO_QUEUE_LEN];
   uint8_t    radioIn, radioOut;
   bool       radioBusy, radioFull;
-
-  uint16_t   time_period;
 
   RADIO_MSG  node1;
   message_t node1_msg;
@@ -57,9 +58,9 @@ implementation
     node1.nodeid = NODE1;
     node1.counter = -1;
     node1_ack = TRUE;
-
-    time_period = 500;
-    call Timer0.startPeriodic(time_period);
+    node1.time_period = 500;
+    node1.total_time = 0;
+    call Timer0.startPeriodic(node1.time_period);
 
     call RadioControl.start();
   }
@@ -72,15 +73,24 @@ implementation
     atomic {
       if (node1_ack)
       {
+        call ReadLight.read();
+        call ReadTemperature.read();
+        call ReadHumidity.read();
         node1.counter++;
         node1_ack = FALSE;
       }
+      node1.total_time += node1.time_period;
       call RadioPacket.setPayloadLength(&node1_msg, sizeof(RADIO_MSG));
       call RadioAMPacket.setSource(&node1_msg, NODE1);
       call RadioAMPacket.setDestination(&node1_msg, NODE0);
       btrpkt = (RADIO_MSG*)(call RadioPacket.getPayload(&node1_msg, sizeof(RADIO_MSG)));
       btrpkt->nodeid = node1.nodeid;
       btrpkt->counter = node1.counter;
+      btrpkt->temperature = node1.temperature;
+      btrpkt->humidity = node1.humidity;
+      btrpkt->light = node1.light;
+      btrpkt->time_period = node1.time_period;
+      btrpkt->total_time = node1.total_time;
       if (!radioFull)
 	{
 	  ret = radioQueue[radioIn];
@@ -184,4 +194,23 @@ implementation
     
     post radioSendTask();
   }
+
+  event void ReadTemperature.readDone(error_t result, uint16_t data)
+  {
+    if (result == SUCCESS)
+      node1.temperature = data;
+  }
+
+  event void ReadHumidity.readDone(error_t result, uint16_t data)
+  {
+    if (result == SUCCESS)
+      node1.humidity = data;
+  }
+
+  event void ReadLight.readDone(error_t result, uint16_t data)
+  {
+    if (result == SUCCESS)
+      node1.light = data;
+  }
 }
+
