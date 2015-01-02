@@ -186,7 +186,7 @@ class Graph extends JPanel
         		gy = data.getPhysicalHumid();
         		break;
         	case Window.LIGHT:
-        		gy = data.getPhysicalTemp();
+        		gy = data.getPhysicalLight();
         		break;
         	}
     	}
