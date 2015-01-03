@@ -35,17 +35,17 @@ class Node {
     /* Update data to hold received samples newDataIndex .. newEnd.
        If we receive data with a lower index, we discard newer data
        (we assume the mote rebooted). */
-    private void setEnd(long newDataIndex, long newEnd) {
+    private void setEnd(int newDataIndex, int newEnd) {
     if (newDataIndex < dataStart || data == null) {
         /* New data is before the start of what we have. Just throw it
            all away and start again */
-        dataStart = (int) newDataIndex;
+        dataStart = newDataIndex;
         data = new DataType[INCREMENT];
     }
     if (newEnd > dataStart + data.length) {
         /* Try extending first */
         if (data.length < MAX_SIZE) {
-        int newLength = (int) ((newEnd - dataStart + INCREMENT - 1) / INCREMENT * INCREMENT);
+        int newLength = ((newEnd - dataStart + INCREMENT - 1) / INCREMENT * INCREMENT);
         if (newLength >= MAX_SIZE) {
             newLength = MAX_SIZE;
         }
@@ -59,7 +59,7 @@ class Node {
         /* Still doesn't fit. Squish.
            We assume INCREMENT >= (newEnd - newDataIndex), and ensure
            that dataStart + data.length - INCREMENT = newDataIndex */
-        int newStart = (int) (newDataIndex + INCREMENT - data.length);
+        int newStart = (newDataIndex + INCREMENT - data.length);
 
         if (dataStart + data.length > newStart) {
             System.arraycopy(data, newStart - dataStart, data, 0,
@@ -76,16 +76,16 @@ class Node {
 
     /* If we receive a count less than the old count, we assume the old
        data is invalid */
-    dataEnd = (int) newEnd;
+    dataEnd = newEnd;
 
     }
 
     /* Data received containing NREADINGS samples from messageId * NREADINGS 
        onwards */
     void update(long messageId, DataType readings) {
-    long start = messageId;
+    int start = (int) messageId;
     setEnd(start, start + 1);
-    data[(int) (start - dataStart)] = readings;
+    data[start - dataStart] = readings;
     }
 
     /* Return value of sample x, or null for missing data */
