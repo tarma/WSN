@@ -123,7 +123,11 @@ implementation
     atomic {
       RADIO_MSG *btrpkt = (RADIO_MSG*)payload;
       ACK_MSG *ackpkt;
-     if (((btrpkt->nodeid == node1.nodeid) && (btrpkt->counter == node1.counter)) || ((btrpkt->nodeid == node2.nodeid) && (btrpkt->counter == node2.counter)))
+      if (((btrpkt->nodeid == node1.nodeid) && (btrpkt->counter == node1.counter)) || ((btrpkt->nodeid == node2.nodeid) && (btrpkt->counter == node2.counter)))
+      {
+        call RadioPacket.setPayloadLength(msg, sizeof(RADIO_MSG));
+        call RadioAMPacket.setSource(msg, NODE0);
+        call RadioAMPacket.setDestination(msg, AM_BROADCAST_ADDR);
         if (!serialFull)
         {
           ret = serialQueue[serialIn];
@@ -149,25 +153,26 @@ implementation
 	  dropBlink();
           return ret;
         }
+      }
 
-     if (btrpkt->nodeid == node1.nodeid)
-     {
-       call SerialPacket.setPayloadLength(&node1_msg, sizeof(ACK_MSG));
-       call SerialAMPacket.setSource(&node1_msg, NODE0);
-       call SerialAMPacket.setDestination(&node1_msg, NODE1);
-       ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node1_msg, sizeof(ACK_MSG)));
-     }
-     else
-     {
-       call SerialPacket.setPayloadLength(&node2_msg, sizeof(ACK_MSG));
-       call SerialAMPacket.setSource(&node2_msg, NODE0);
-       call SerialAMPacket.setDestination(&node2_msg, NODE1);
-       ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node2_msg, sizeof(ACK_MSG)));
-     }
-     ackpkt->nodeid = btrpkt->nodeid;
-     ackpkt->counter = btrpkt->counter;
+      if (btrpkt->nodeid == node1.nodeid)
+      {
+        call SerialPacket.setPayloadLength(&node1_msg, sizeof(ACK_MSG));
+        call SerialAMPacket.setSource(&node1_msg, NODE0);
+        call SerialAMPacket.setDestination(&node1_msg, NODE1);
+        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node1_msg, sizeof(ACK_MSG)));
+      }
+      else
+      {
+        call SerialPacket.setPayloadLength(&node2_msg, sizeof(ACK_MSG));
+        call SerialAMPacket.setSource(&node2_msg, NODE0);
+        call SerialAMPacket.setDestination(&node2_msg, NODE1);
+        ackpkt = (ACK_MSG*)(call SerialPacket.getPayload(&node2_msg, sizeof(ACK_MSG)));
+      }
+      ackpkt->nodeid = btrpkt->nodeid;
+      ackpkt->counter = btrpkt->counter;
 
-     if (!radioFull)
+      if (!radioFull)
 	{
 	  ret = radioQueue[radioIn];
           if (btrpkt->nodeid == node1.nodeid)
@@ -214,7 +219,7 @@ implementation
     call SerialPacket.clear(msg);
     call SerialAMPacket.setSource(msg, src);
 
-    if (call SerialSend.send[id](AM_BROADCAST_ADDR, serialQueue[serialOut], len) == SUCCESS)
+    if (call SerialSend.send[id](addr, serialQueue[serialOut], len) == SUCCESS)
       call Leds.led1Toggle();
     else
       {
@@ -244,7 +249,14 @@ implementation
     message_t *ret = msg;
     bool reflectToken = FALSE;
 
+    if (len != sizeof(TIME_MSG))
+      return ret;
+
     atomic
+    {
+      call SerialPacket.setPayloadLength(msg, sizeof(TIME_MSG));
+      call SerialAMPacket.setSource(msg, NODE0);
+      call SerialAMPacket.setDestination(msg, NODE1);
       if (!radioFull)
 	{
 	  reflectToken = TRUE;
@@ -263,6 +275,7 @@ implementation
 	}
       else
 	dropBlink();
+    }
 
     if (reflectToken) {
       //call SerialTokenReceive.ReflectToken(Token);
