@@ -58,7 +58,7 @@ implementation
     node.nodeid = TOS_NODE_ID;
     node.counter = -1;
     node_ack = TRUE;
-    node.time_period = 500;
+    node.time_period = 100;
     node.total_time = 0;
     call Timer0.startPeriodic(node.time_period);
 
