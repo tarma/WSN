@@ -384,7 +384,7 @@ class Window {
     		return 150;
     	}
     	if (mode == Window.LIGHT) {
-    		return 500;
+    		return 200;
     	}
     	return 500;
     }

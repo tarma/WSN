@@ -11,6 +11,8 @@
 import net.tinyos.message.*;
 import net.tinyos.util.*;
 import java.io.*;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /* The "Oscilloscope" demo app. Displays graphs showing data received from
    the Oscilloscope mote application, and allows the user to:
@@ -38,6 +40,8 @@ public class Oscilloscope implements MessageListener
     MoteIF mote;
     Data data;
     Window window;
+    private final Timer timer;
+    private boolean canRefreshInterval;
 
     /* The current sampling period. If we receive a message from a mote
        with a newer version, we update our interval. If we receive a message
@@ -51,6 +55,7 @@ public class Oscilloscope implements MessageListener
     data = new Data(this);
     window = new Window(this);
     window.setup();
+    canRefreshInterval = true;
     mote = new MoteIF(PrintStreamMessenger.err);
     mote.registerListener(new OscilloscopeMsg(), this);
     }
@@ -80,7 +85,20 @@ public class Oscilloscope implements MessageListener
     void periodUpdate(int moteInterval) {
     if (interval != moteInterval) {
     	/* It's old. Update the mote's vision of the interval. */
-        sendInterval();
+    	if (canRefreshInterval) {
+    		sendInterval();
+    		canRefreshInterval = false;
+    		timer = new Timer();
+    		timer.schedule(new TimerTask() {
+
+				@Override
+				public void run() {
+					canRefreshInterval = true;
+					timer.cancel();
+				}
+				
+    		}, 1000);
+    	}
     }
     }
 
