@@ -28,6 +28,6 @@ public class DataType {
 	}
 	
 	public double getPhysicalLight() {
-		return (85 * this.light);
+		return (0.085 * this.light);
 	}
 }

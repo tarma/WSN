@@ -381,12 +381,12 @@ class Window {
     		return 125;
     	}
     	if (mode == Window.HUMID) {
-    		return 100;
+    		return 150;
     	}
     	if (mode == Window.LIGHT) {
-    		return 105000;
+    		return 500;
     	}
-    	return 105000;
+    	return 500;
     }
     
     void saveData() {

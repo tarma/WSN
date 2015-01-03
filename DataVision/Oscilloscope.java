@@ -96,7 +96,7 @@ public class Oscilloscope implements MessageListener
     return true;
     }
 
-    /* Broadcast a version+interval message. */
+    /* Broadcast a interval message. */
     void sendInterval() {
     TimeMsg tmsg = new TimeMsg();
 
