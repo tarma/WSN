@@ -40,7 +40,7 @@ public class Oscilloscope implements MessageListener
     MoteIF mote;
     Data data;
     Window window;
-    private final Timer timer;
+    private Timer timer;
     private boolean canRefreshInterval;
 
     /* The current sampling period. If we receive a message from a mote
