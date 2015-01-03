@@ -201,6 +201,8 @@ implementation
       if (len == sizeof(TIME_MSG)) {
         TIME_MSG *btrpkt = (TIME_MSG *)payload;
         node.time_period = btrpkt->time_period;
+        call Timer0.stop();
+        call Timer0.startPeriodic(node.time_period);
         if (node.nodeid == NODE1)
           {
             call RadioPacket.setPayloadLength(msg, sizeof(TIME_MSG));
