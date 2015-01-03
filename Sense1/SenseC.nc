@@ -55,7 +55,7 @@ implementation
     radioBusy = FALSE;
     radioFull = TRUE;
 
-    node.nodeid = NODE1;
+    node.nodeid = TOS_NODE_ID;
     node.counter = -1;
     node_ack = TRUE;
     node.time_period = 500;
@@ -90,8 +90,11 @@ implementation
       btrpkt->total_time = node.total_time;
       call RadioPacket.setPayloadLength(&node_msg, sizeof(RADIO_MSG));
       call RadioAMPacket.setType(&node_msg, AM_RADIO_MSG);
-      call RadioAMPacket.setSource(&node_msg, NODE1);
-      call RadioAMPacket.setDestination(&node_msg, NODE0);
+      call RadioAMPacket.setSource(&node_msg, node.nodeid);
+      if (node.nodeid == NODE1)
+        call RadioAMPacket.setDestination(&node_msg, NODE0);
+      else
+        call RadioAMPacket.setDestination(&node_msg, NODE1);
       if (!radioFull)
 	{
 	  ret = radioQueue[radioIn];
@@ -149,33 +152,34 @@ implementation
             node_ack = TRUE;
         }
         else
-        {
-          call RadioPacket.setPayloadLength(msg, sizeof(ACK_MSG));
-          call RadioAMPacket.setType(msg, AM_RADIO_MSG);
-          call RadioAMPacket.setSource(msg, NODE1);
-          call RadioAMPacket.setDestination(msg, NODE2);
-          if (!radioFull)
-  	  {
-	    ret = radioQueue[radioIn];
-	    *radioQueue[radioIn] = *msg;
-	    radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
-	    if (radioIn == radioOut)
-	      radioFull = TRUE;
-	    if (!radioBusy)
-	    {
-	      post radioSendTask();
-	      radioBusy = TRUE;
+          if (node.nodeid == NODE1)
+          {
+            call RadioPacket.setPayloadLength(msg, sizeof(ACK_MSG));
+            call RadioAMPacket.setType(msg, AM_RADIO_MSG);
+            call RadioAMPacket.setSource(msg, node.nodeid);
+            call RadioAMPacket.setDestination(msg, NODE2);
+            if (!radioFull)
+    	    {
+	      ret = radioQueue[radioIn];
+	      *radioQueue[radioIn] = *msg;
+	      radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
+	      if (radioIn == radioOut)
+	        radioFull = TRUE;
+	      if (!radioBusy)
+	      {
+	        post radioSendTask();
+	        radioBusy = TRUE;
+	      }
+              call Leds.led2Toggle();
 	    }
-            call Leds.led2Toggle();
-	  }
-          else
-	    dropBlink();
-        }
+            else
+	      dropBlink();
+          }
       }
-      if (len == sizeof(RADIO_MSG)) {
+      if ((len == sizeof(RADIO_MSG)) && ((call RadioAMPacket.source(msg)) == NODE2)){
         call RadioPacket.setPayloadLength(msg, sizeof(RADIO_MSG));
         call RadioAMPacket.setType(msg, AM_RADIO_MSG);
-        call RadioAMPacket.setSource(msg, NODE1);
+        call RadioAMPacket.setSource(msg, node.nodeid);
         call RadioAMPacket.setDestination(msg, NODE0);
         if (!radioFull)
 	  {
