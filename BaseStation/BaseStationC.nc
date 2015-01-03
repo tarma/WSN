@@ -26,8 +26,8 @@ module BaseStationC @safe() {
 implementation
 {
   enum {
-    SERIAL_QUEUE_LEN = 12,
-    RADIO_QUEUE_LEN = 12,
+    SERIAL_QUEUE_LEN = 64,
+    RADIO_QUEUE_LEN = 64,
   };
 
   message_t  serialQueueBufs[SERIAL_QUEUE_LEN];
@@ -205,34 +205,37 @@ implementation
     am_addr_t addr, src;
     message_t* msg;
     atomic
+    {
       if (serialIn == serialOut && !serialFull)
 	{
 	  serialBusy = FALSE;
 	  return;
 	}
 
-    msg = serialQueue[serialOut];
-    tmpLen = len = call RadioPacket.payloadLength(msg);
-    id = call RadioAMPacket.type(msg);
-    addr = call RadioAMPacket.destination(msg);
-    src = call RadioAMPacket.source(msg);
-    call SerialPacket.clear(msg);
-    call SerialAMPacket.setSource(msg, src);
+      msg = serialQueue[serialOut];
+      tmpLen = len = call RadioPacket.payloadLength(msg);
+      id = call RadioAMPacket.type(msg);
+      addr = call RadioAMPacket.destination(msg);
+      src = call RadioAMPacket.source(msg);
+      call SerialPacket.clear(msg);
+      call SerialAMPacket.setSource(msg, src);
 
-    if (call SerialSend.send[id](addr, serialQueue[serialOut], len) == SUCCESS)
-      call Leds.led1Toggle();
-    else
+      if (call SerialSend.send[id](addr, serialQueue[serialOut], len) == SUCCESS)
+        call Leds.led1Toggle();
+      else
       {
 	failBlink();
 	post serialSendTask();
       }
+    }
   }
 
   event void SerialSend.sendDone[am_id_t id](message_t* msg, error_t error) {
-    if (error != SUCCESS)
-      failBlink();
-    else
-      atomic
+    atomic
+    {
+      if (error != SUCCESS)
+        failBlink();
+      else
 	if (msg == serialQueue[serialOut])
 	  {
 	    if (++serialOut >= SERIAL_QUEUE_LEN)
@@ -240,7 +243,8 @@ implementation
 	    if (serialFull)
 	      serialFull = FALSE;
 	  }
-    post serialSendTask();
+      post serialSendTask();
+    }
   }
 
   event message_t *SerialReceive.receive[am_id_t id](message_t *msg,
@@ -291,35 +295,38 @@ implementation
     message_t* msg;
     
     atomic
+    {
       if (radioIn == radioOut && !radioFull)
 	{
 	  radioBusy = FALSE;
 	  return;
 	}
 
-    msg = radioQueue[radioOut];
-    len = call SerialPacket.payloadLength(msg);
-    addr = call SerialAMPacket.destination(msg);
-    source = call SerialAMPacket.source(msg);
-    id = call SerialAMPacket.type(msg);
+      msg = radioQueue[radioOut];
+      len = call SerialPacket.payloadLength(msg);
+      addr = call SerialAMPacket.destination(msg);
+      source = call SerialAMPacket.source(msg);
+      id = call SerialAMPacket.type(msg);
 
-    call RadioPacket.clear(msg);
-    call RadioAMPacket.setSource(msg, source);
+      call RadioPacket.clear(msg);
+      call RadioAMPacket.setSource(msg, source);
     
-    if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
-      call Leds.led0Toggle();
-    else
+      if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
+        call Leds.led0Toggle();
+      else
       {
 	failBlink();
 	post radioSendTask();
       }
+    }
   }
 
   event void RadioSend.sendDone[am_id_t id](message_t* msg, error_t error) {
-    if (error != SUCCESS)
-      failBlink();
-    else
-      atomic
+    atomic
+    {
+      if (error != SUCCESS)
+        failBlink();
+      else
 	if (msg == radioQueue[radioOut])
 	  {
 	    if (++radioOut >= RADIO_QUEUE_LEN)
@@ -327,7 +334,8 @@ implementation
 	    if (radioFull)
 	      radioFull = FALSE;
 	  }
-    
-    post radioSendTask();
+      post radioSendTask();
+    }
   }
 }
+

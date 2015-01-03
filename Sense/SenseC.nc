@@ -24,7 +24,7 @@ module SenseC @safe() {
 implementation
 {
   enum {
-    RADIO_QUEUE_LEN = 12,
+    RADIO_QUEUE_LEN = 128,
   };
 
   message_t  radioQueueBufs[RADIO_QUEUE_LEN];
@@ -113,9 +113,7 @@ implementation
 	}
       else
 	dropBlink();
-
     }
-
   }
 
   event void RadioControl.startDone(error_t error) {
@@ -239,33 +237,36 @@ implementation
     message_t* msg;
     
     atomic
+    {
       if (radioIn == radioOut && !radioFull)
 	{
 	  radioBusy = FALSE;
 	  return;
 	}
 
-    msg = radioQueue[radioOut];
-    len = call RadioPacket.payloadLength(msg);
-    addr = call RadioAMPacket.destination(msg);
-    source = call RadioAMPacket.source(msg);
-    id = call RadioAMPacket.type(msg);
+      msg = radioQueue[radioOut];
+      len = call RadioPacket.payloadLength(msg);
+      addr = call RadioAMPacket.destination(msg);
+      source = call RadioAMPacket.source(msg);
+      id = call RadioAMPacket.type(msg);
 
-    if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
-      call Leds.led0Toggle();
-    else
+      if (call RadioSend.send[id](addr, msg, len) == SUCCESS)
+        call Leds.led0Toggle();
+      else
       {
-	failBlink();
+	  failBlink();
 	post radioSendTask();
       }
+    }
   }
 
   event void RadioSend.sendDone[am_id_t id](message_t* msg, error_t error) {
-    if (error != SUCCESS)
-      failBlink();
-    else
-      atomic
-	if (msg == radioQueue[radioOut])
+    atomic
+    {
+      if (error != SUCCESS)
+        failBlink();
+      else
+	  if (msg == radioQueue[radioOut])
 	  {
 	    if (++radioOut >= RADIO_QUEUE_LEN)
 	      radioOut = 0;
@@ -273,7 +274,8 @@ implementation
 	      radioFull = FALSE;
 	  }
     
-    post radioSendTask();
+      post radioSendTask();
+    }
   }
 
   event void ReadTemperature.readDone(error_t result, uint16_t data)
