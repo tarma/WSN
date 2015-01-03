@@ -45,22 +45,37 @@ implementation
   event void RadioControl.startDone(error_t error) {}
   event void RadioControl.stopDone(error_t error) {}
 
+  void qsort(uint16_t x, uint16_t y)
+  {
+    uint16_t i = x, j = y;
+    uint32_t k = num[((x + y) >> 1)], t;
+
+    while (i < j)
+    {
+      while (num[i] < k) i++;
+      while (num[j] > k) j--;
+      if (i <= j)
+      {
+        t = num[i];
+        num[i] = num[j];
+        num[j] = t;
+        i++;
+        j--;
+      }
+    }
+
+    if (x < j) qsort(x, j);
+    if (y > i) qsort(i, y);
+  }
+
   void count()
   {
     RESULT_MSG *btrpkt;
-    uint16_t i, j;
 
     atomic
     {
       node.average = node.sum / 2000;
-      for (i = 1999; i >= 1; i--)
-        for (j = 1; j <= i; j++)
-          if (num[j] > num[j + 1])
-          {
-            num[j] = num[j] ^ num[j + 1];
-            num[j + 1] = num[j + 1] ^ num[j];
-            num[j] = num[j] & num[j + 1];
-          }
+      qsort(1, 2000);
       node.median = ((num[1000] + num[1001]) >> 1);
       btrpkt = (RESULT_MSG*)(call RadioPacket.getPayload(&node_msg, sizeof(RESULT_MSG)));
       btrpkt->group_id = node.group_id;
@@ -75,12 +90,12 @@ implementation
       call RadioAMPacket.setDestination(&node_msg, NODE_DESTINATION);
       if (call RadioSend.send[6](NODE_DESTINATION, &node_msg, sizeof(RESULT_MSG)) == SUCCESS)
         call Leds.led1Toggle();
-      printf("%d\n", node.group_id);
-      printf("%ld\n", node.max);
-      printf("%ld\n", node.min);
-      printf("%ld\n", node.sum);
-      printf("%ld\n", node.average);
-      printf("%ld\n", node.median);
+      printf("groud_id: %d\n", node.group_id);
+      printf("max: %ld\n", node.max);
+      printf("min: %ld\n", node.min);
+      printf("sum: %ld\n", node.sum);
+      printf("average: %ld\n", node.average);
+      printf("median: %ld\n", node.median);
       printfflush();
     } 
   }
