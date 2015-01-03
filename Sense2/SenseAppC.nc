@@ -18,11 +18,14 @@ implementation {
   SenseC.ReadLight -> LightSensor.Read;
   SenseC.ReadTemperature->TmpHumSensor.Temperature;
   SenseC.ReadHumidity -> TmpHumSensor.Humidity;
+
   SenseC.Boot -> MainC;
   SenseC.Leds -> LedsC;
   SenseC.Timer -> Timer;
+
   SenseC.Packet -> AMSenderC;
   SenseC.AMPacket -> AMSenderC;
   SenseC.AMSend -> AMSenderC.AMSend;
   SenseC.AMControl -> ActiveMessageC;
+  SenseC.Receive->AMReceiverC;
 }

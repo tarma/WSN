@@ -1,7 +1,9 @@
 
 #ifndef SENSEMOTE_H
 #define SENSEMOTE_H
-#define NODE1 288
+#define NODE0 0
+#define NODE1 1
+#define NODE2 2
 
 enum {
   AM_RADIO_MSG = 6
