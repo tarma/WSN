@@ -39,6 +39,7 @@ implementation
   message_t  * ONE_NOK radioQueue[RADIO_QUEUE_LEN];
   uint8_t    radioIn, radioOut;
   bool       radioBusy, radioFull;
+  uint8_t    radioError;
 
   ACK_MSG    node1, node2;
   bool       node1Lock, node2Lock;
@@ -47,12 +48,25 @@ implementation
   task void serialSendTask();
   task void radioSendTask();
 
+  void fixError() {
+    radioError++;
+    if (radioError == 10)
+    {
+      radioIn = radioOut = radioError = 0;
+      radioBusy = radioFull = FALSE;
+      serialIn = serialOut = 0;
+      serialBusy = serialFull = FALSE;
+    }
+  }
+
   void dropBlink() {
     call Leds.led2Toggle();
+    fixError();
   }
 
   void failBlink() {
     call Leds.led2Toggle();
+    fixError();
   }
 
   event void Boot.booted() {
@@ -69,6 +83,7 @@ implementation
     radioIn = radioOut = 0;
     radioBusy = FALSE;
     radioFull = TRUE;
+    radioError = 0;
 
     node1.nodeid = NODE1;
     node1.counter = 0;

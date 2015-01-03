@@ -31,6 +31,7 @@ implementation
   message_t  * ONE_NOK radioQueue[RADIO_QUEUE_LEN];
   uint8_t    radioIn, radioOut;
   bool       radioBusy, radioFull;
+  uint8_t    radioError;
 
   RADIO_MSG  node;
   message_t node_msg;
@@ -38,12 +39,23 @@ implementation
 
   task void radioSendTask();
 
+  void fixError() {
+    radioError++;
+    if (radioError == 10)
+    {
+      radioIn = radioOut = radioError = 0;
+      radioBusy = radioFull = FALSE;
+    }
+  }
+
   void dropBlink() {
     call Leds.led2Toggle();
+    fixError();
   }
 
   void failBlink() {
     call Leds.led2Toggle();
+    fixError();
   }
 
   event void Boot.booted() {
@@ -54,6 +66,7 @@ implementation
     radioIn = radioOut = 0;
     radioBusy = FALSE;
     radioFull = TRUE;
+    radioError = 0;
 
     node.nodeid = TOS_NODE_ID;
     node.counter = -1;
@@ -254,7 +267,7 @@ implementation
         call Leds.led0Toggle();
       else
       {
-	  failBlink();
+	failBlink();
 	post radioSendTask();
       }
     }
