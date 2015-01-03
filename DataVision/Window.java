@@ -371,7 +371,7 @@ class Window {
     		return 0;
     	}
     	if (mode == Window.LIGHT) {
-    		return 0;
+    		return -20;
     	}
     	return -45;
     }
