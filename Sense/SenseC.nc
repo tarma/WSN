@@ -198,6 +198,33 @@ implementation
           else
 	    dropBlink();
       }
+      if (len == sizeof(TIME_MSG)) {
+        TIME_MSG *btrpkt = (TIME_MSG *)payload;
+        node.time_period = btrpkt->time_period;
+        if (node.nodeid == NODE1)
+          {
+            call RadioPacket.setPayloadLength(msg, sizeof(TIME_MSG));
+            call RadioAMPacket.setType(msg, AM_RADIO_MSG);
+            call RadioAMPacket.setSource(msg, node.nodeid);
+            call RadioAMPacket.setDestination(msg, NODE2);
+            if (!radioFull)
+    	    {
+	      ret = radioQueue[radioIn];
+	      *radioQueue[radioIn] = *msg;
+	      radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
+	      if (radioIn == radioOut)
+	        radioFull = TRUE;
+	      if (!radioBusy)
+	      {
+	        post radioSendTask();
+	        radioBusy = TRUE;
+	      }
+              call Leds.led2Toggle();
+	    }
+            else
+	      dropBlink();
+          }
+      }
     }
     
     return ret;
