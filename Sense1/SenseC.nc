@@ -32,9 +32,9 @@ implementation
   uint8_t    radioIn, radioOut;
   bool       radioBusy, radioFull;
 
-  RADIO_MSG  node1;
-  message_t node1_msg;
-  bool node1_ack;
+  RADIO_MSG  node;
+  message_t node_msg;
+  bool node_ack;
 
   task void radioSendTask();
 
@@ -55,12 +55,12 @@ implementation
     radioBusy = FALSE;
     radioFull = TRUE;
 
-    node1.nodeid = NODE1;
-    node1.counter = -1;
-    node1_ack = TRUE;
-    node1.time_period = 500;
-    node1.total_time = 0;
-    call Timer0.startPeriodic(node1.time_period);
+    node.nodeid = NODE1;
+    node.counter = -1;
+    node_ack = TRUE;
+    node.time_period = 500;
+    node.total_time = 0;
+    call Timer0.startPeriodic(node.time_period);
 
     call RadioControl.start();
   }
@@ -71,31 +71,31 @@ implementation
     RADIO_MSG *btrpkt;
 
     atomic {
-      if (node1_ack)
+      if (node_ack)
       {
         call ReadLight.read();
         call ReadTemperature.read();
         call ReadHumidity.read();
-        node1.counter++;
-        node1_ack = FALSE;
+        node.counter++;
+        node_ack = FALSE;
       }
-      node1.total_time += node1.time_period;
-      btrpkt = (RADIO_MSG*)(call RadioPacket.getPayload(&node1_msg, sizeof(RADIO_MSG)));
-      btrpkt->nodeid = node1.nodeid;
-      btrpkt->counter = node1.counter;
-      btrpkt->temperature = node1.temperature;
-      btrpkt->humidity = node1.humidity;
-      btrpkt->light = node1.light;
-      btrpkt->time_period = node1.time_period;
-      btrpkt->total_time = node1.total_time;
-      call RadioPacket.setPayloadLength(&node1_msg, sizeof(RADIO_MSG));
-      call RadioAMPacket.setType(&node1_msg, AM_RADIO_MSG);
-      call RadioAMPacket.setSource(&node1_msg, NODE1);
-      call RadioAMPacket.setDestination(&node1_msg, NODE0);
+      node.total_time += node.time_period;
+      btrpkt = (RADIO_MSG*)(call RadioPacket.getPayload(&node_msg, sizeof(RADIO_MSG)));
+      btrpkt->nodeid = node.nodeid;
+      btrpkt->counter = node.counter;
+      btrpkt->temperature = node.temperature;
+      btrpkt->humidity = node.humidity;
+      btrpkt->light = node.light;
+      btrpkt->time_period = node.time_period;
+      btrpkt->total_time = node.total_time;
+      call RadioPacket.setPayloadLength(&node_msg, sizeof(RADIO_MSG));
+      call RadioAMPacket.setType(&node_msg, AM_RADIO_MSG);
+      call RadioAMPacket.setSource(&node_msg, NODE1);
+      call RadioAMPacket.setDestination(&node_msg, NODE0);
       if (!radioFull)
 	{
 	  ret = radioQueue[radioIn];
-	  *radioQueue[radioIn] = node1_msg;
+	  *radioQueue[radioIn] = node_msg;
 
 	  radioIn = (radioIn + 1) % RADIO_QUEUE_LEN;
 	
@@ -143,10 +143,10 @@ implementation
     atomic {
       if (len == sizeof(ACK_MSG)) {
         ACK_MSG *btrpkt = (ACK_MSG*)payload;
-        if (btrpkt->nodeid == node1.nodeid)
+        if (btrpkt->nodeid == node.nodeid)
         {
-          if (btrpkt->counter == node1.counter)
-            node1_ack = TRUE;
+          if (btrpkt->counter == node.counter)
+            node_ack = TRUE;
         }
         else
         {
@@ -246,19 +246,19 @@ implementation
   event void ReadTemperature.readDone(error_t result, uint16_t data)
   {
     if (result == SUCCESS)
-      node1.temperature = data;
+      node.temperature = data;
   }
 
   event void ReadHumidity.readDone(error_t result, uint16_t data)
   {
     if (result == SUCCESS)
-      node1.humidity = data;
+      node.humidity = data;
   }
 
   event void ReadLight.readDone(error_t result, uint16_t data)
   {
     if (result == SUCCESS)
-      node1.light = data;
+      node.light = data;
   }
 }
 
