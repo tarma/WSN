@@ -78,7 +78,10 @@ implementation
       node.average = node.sum / 2000;
       qsort(1, 2000);
       node.median = ((num[1000] + num[1001]) >> 1);
-      call Timer0.startPeriodic(100);
+      if (TOS_NODE_ID == NODE0)
+        call Timer0.startPeriodic(300);
+      else 
+        call Timer0.startPeriodic(100);
     }
   }
 
