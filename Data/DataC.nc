@@ -20,7 +20,7 @@ module DataC @safe() {
 implementation
 {
   RESULT_MSG node;
-  message_t node_msg;
+  message_t node_msg, ack_msg;
   uint16_t counter;
   uint32_t num[2001];
   bool finish;
@@ -163,10 +163,8 @@ implementation
           call RadioPacket.setPayloadLength(msg, sizeof(ACK_MSG));
           call RadioAMPacket.setType(msg, 6);
           call RadioAMPacket.setSource(msg, TOS_NODE_ID);
-          call RadioAMPacket.setDestination(msg, NODE1);
-          call RadioSend.send[6](NODE1, msg, sizeof(ACK_MSG));
-          call RadioAMPacket.setDestination(msg, NODE2);
-          call RadioSend.send[6](NODE2, msg, sizeof(ACK_MSG));
+          call RadioAMPacket.setDestination(msg, AM_BROADCAST_ADDR);
+          call RadioSend.send[6](AM_BROADCAST_ADDR, msg, sizeof(ACK_MSG));
         }
       }
       if ((len == sizeof(ACK_MSG)) && ((call RadioAMPacket.source(msg)) == NODE0) && (TOS_NODE_ID != NODE0)) {
@@ -178,7 +176,19 @@ implementation
         }
       }
       if ((len == sizeof(RESULT_MSG)) && (((call RadioAMPacket.source(msg)) == NODE1) || ((call RadioAMPacket.source(msg)) == NODE2)) && (TOS_NODE_ID == NODE0)) {
-        RESULT_MSG *btrpkt = (RESULT_MSG*)payload;
+        RESULT_MSG *btrpkt;
+        if (finish)
+        {
+          ACK_MSG *ackpkt = (ACK_MSG*)(call RadioPacket.getPayload(&ack_msg, sizeof(ACK_MSG)));
+          ackpkt->group_id = GROUP_ID;
+          call RadioPacket.setPayloadLength(&ack_msg, sizeof(ACK_MSG));
+          call RadioAMPacket.setType(&ack_msg, 6);
+          call RadioAMPacket.setSource(&ack_msg, TOS_NODE_ID);
+          call RadioAMPacket.setDestination(&ack_msg, AM_BROADCAST_ADDR);
+          call RadioSend.send[6](AM_BROADCAST_ADDR, &ack_msg, sizeof(ACK_MSG));
+          return msg;
+        }
+        btrpkt = (RESULT_MSG*)payload;
         call RadioPacket.setPayloadLength(msg, sizeof(RESULT_MSG));
         call RadioAMPacket.setType(msg, 6);
         call RadioAMPacket.setSource(msg, TOS_NODE_ID);

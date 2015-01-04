@@ -5,7 +5,7 @@
 #define NODE1 35
 #define NODE2 36
 #define NODE_SOURCE 1000
-#define NODE_DESTINATION 1000
+#define NODE_DESTINATION 0
 
 typedef nx_struct DATA_MSG {
   nx_uint16_t sequence_number;
