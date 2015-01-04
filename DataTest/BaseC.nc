@@ -29,7 +29,7 @@ implementation
   bool busy = FALSE;
   bool a_busy = FALSE;
   uint16_t Timer_Period = 10;
-  uint8_t  id = 34;
+  uint8_t  id = 12;
    
   event void Boot.booted() {
     result.max = 200000;
@@ -78,19 +78,19 @@ implementation
       }
       printf("%u\n",data->sequence_number);
       count ++;
-      random_integer += ;
+      random_integer += 2;
       busy = FALSE;
     }
   }  
 
   event message_t* Receive.receive(message_t* msg, void* payload, uint8_t len){
-    call Leds.led0Toggle();    
+    call Leds.led1Toggle();    
     atomic{     
       if (len == sizeof(RESULT_MSG)) {     
          ackpkt = (RESULT_MSG*)payload; 
          if(ackpkt->group_id == id)
          {
-            if(result.max == ackpkt -> max && result.min == ackpkt -> min && result.sum == ackpkt -> sum && result.average == ackpkt -> average && result.median == ackpkt -> median){
+            {
               ack = (ACK_MSG*)(call Packet.getPayload(&package, sizeof(ACK_MSG)));
               ack -> group_id = ackpkt ->group_id;
               if(call AMSend.send(AM_BROADCAST_ADDR, &package, sizeof(ACK_MSG)) == SUCCESS) {
@@ -104,3 +104,4 @@ implementation
     return msg;
   }
 }
+
